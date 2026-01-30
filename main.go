@@ -1,23 +1,25 @@
 package main
 
 import (
-	"log"
 	"net/http"
+	"time"
 
 	"github.com/Andreseag/test-go-backend/config"
 	"github.com/Andreseag/test-go-backend/controllers"
 	"github.com/Andreseag/test-go-backend/models"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 // Middleware para habilitar CORS
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Permitir cualquier origen (en producción pondrías tu URL de React)
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		// Permitir que React (o cualquier origen) acceda
+		w.Header().Set("Access-Control-Allow-Origin", "*") 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-		// Si es una petición de tipo OPTIONS (pre-flight), respondemos OK y salimos
+		// Manejar la petición "pre-flight" (el navegador pregunta antes de enviar datos)
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -28,14 +30,25 @@ func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func main() {
-	// Conectamos a la DB
 	config.ConectarDB()
-  config.DB.AutoMigrate(&models.Producto{})
+	config.DB.AutoMigrate(&models.Task{})
 
-	// Definimos las rutas
-	http.HandleFunc("/api/productos", enableCORS(controllers.GetProductos)) // GET para leer
-	http.HandleFunc("/api/productos/nuevo", enableCORS(controllers.CrearProducto)) // POST para crear
+	r := gin.Default()
 
-	log.Println("🚀 Servidor corriendo en http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Configuración de CORS profesional
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type"},
+		MaxAge:           12 * time.Hour,
+	}))
+ 
+	// Envolvemos las rutas con el middleware
+  r.GET("/api/tasks", controllers.GetTasks)
+	r.POST("/api/tasks/new", controllers.CreateTask)
+	
+	// ¡Aquí está lo que pediste! El :id es el parámetro
+	r.PUT("/api/tasks/:id", controllers.UpdateTask)
+
+	r.Run(":8080")
 }
