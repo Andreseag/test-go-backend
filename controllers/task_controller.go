@@ -58,3 +58,19 @@ func UpdateTask(c *gin.Context) {
 	config.DB.Save(&task)
 	c.JSON(http.StatusOK, task)
 }
+
+func DeleteTask(c *gin.Context) {
+	id := c.Param("id")
+
+	var task models.Task
+	if err := config.DB.First(&task, id).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Tarea no encontrada"})
+	}
+
+	if err := c.ShouldBindJSON(&task); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos"})
+	}
+
+	config.DB.Delete(&task)
+
+}

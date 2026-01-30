@@ -49,6 +49,7 @@ func main() {
 	
 	// ¡Aquí está lo que pediste! El :id es el parámetro
 	r.PUT("/api/tasks/:id", controllers.UpdateTask)
+	r.DELETE("/api/tasks/:id", controllers.DeleteTask) 
 
 	r.Run(":8080")
 }
